@@ -1,0 +1,12 @@
+[Unit]
+Description=signal-cli with Desktop Notifications
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=dbus
+ExecStart=/home/casi/.bin/signal-daemon -ad
+BusName=org.asamk.Signal
+
+# [Install]
+# Alias=dbus-org.asamk.Signal.service
