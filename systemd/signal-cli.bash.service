@@ -1,5 +1,5 @@
 [Unit]
-Description=signal-cli with Desktop Notifications
+Description=signal-cli.bash
 Wants=network-online.target
 After=network-online.target
 
