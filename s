@@ -18,15 +18,16 @@ When MESSAGE is omitted, read from stdin.  See signal-cli(1).
       can be used multiple times to take several screenshots (this
       doesn't currently work); requires maim(1) and slop
   -d  print debugging output
+  -b  use system dbus instead of session
 EOF
 }
 
 # Declare as integers.
-declare -i screenshot=0 debug=0
+declare -i screenshot=0 debug=0 dbus=0
 
 # http://mywiki.wooledge.org/BashFAQ/035#getopts
 # http://wiki.bash-hackers.org/howto/getopts_tutorial
-while getopts ':hsd' opt; do
+while getopts ':hsdb' opt; do
    case $opt in
       h)
          show-help
@@ -38,6 +39,9 @@ while getopts ':hsd' opt; do
       d)
          (( ++debug ))
          ;;
+      b)
+          (( ++dbus ))
+          ;;
       \?)
          echo "Invalid option: -$OPTARG" >&2
          show-help >&2
@@ -49,7 +53,9 @@ shift "$((OPTIND-1))" # Shift off the options and optional --.
 
 signal() {
    if (( debug )); then
-      (set -x; "$signal_cli" --dbus "$@")
+       (set -x; "$signal_cli" --dbus "$@")
+   elif (( dbus )); then
+       dbus-send --system --type=method_call --print-reply --dest="org.asamk.Signal" /org/asamk/Signal "$@"
    else
       "$signal_cli" --dbus "$@"
    fi
@@ -93,7 +99,7 @@ if (( ${#recipients[@]} == 0 )); then
    echo "No known recipients." >&2
    exit 1
 fi
-
+# org.asamk.Signal.sendMessage string:MessageText array:string: string:RECIPIENT
 # Arithmetic expressions evaluate to logical "true" when they are not 0.
 if (( screenshot )); then
    if [[ ! $group && (( ${#recipients[@]} > 1)) ]]; then
@@ -119,7 +125,11 @@ elif (( $# == 0 )); then
    # Read the message from stdin.
    signal send "${recipients[@]}"
 else
-   signal send -m "$*" "${recipients[@]}"
+    if (( dbus )); then
+        signal org.asamk.Signal.sendMessage string:"$*" array:string: string:"${recipients[@]}"
+    else
+        signal send -m "$*" "${recipients[@]}"
+    fi
 fi
 
 # vim: tw=90 sts=-1 sw=3 et
