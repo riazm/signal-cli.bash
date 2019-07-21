@@ -23,8 +23,8 @@ EOF
 }
 
 # Declare as integers.
-declare -i screenshot=0 debug=0 dbus=0
-
+declare -i screenshot=0 debug=0 dbus=1
+# I've set dbus as already active 
 # http://mywiki.wooledge.org/BashFAQ/035#getopts
 # http://wiki.bash-hackers.org/howto/getopts_tutorial
 while getopts ':hsdb' opt; do
@@ -62,7 +62,6 @@ signal() {
    # TODO: allow sending messages when the signal-cli daemon isn't running.
    # "$signal_cli" -u "$user" "$@"
 }
-
 recipients=()
 group=
 while (( $# >= 1 )); do # While there are more positional parameters...
@@ -92,7 +91,10 @@ if [[ $group ]]; then
       echo "Can't send to individual recipients and a group at the same time." >&2
       exit 1
    fi
-   recipients=('-g' "$group")
+   recipients=("$group")
+   messageType=("GroupMessage")
+else
+   messageType=("Message")
 fi
 
 if (( ${#recipients[@]} == 0 )); then
@@ -126,7 +128,7 @@ elif (( $# == 0 )); then
    signal send "${recipients[@]}"
 else
     if (( dbus )); then
-        signal org.asamk.Signal.sendMessage string:"$*" array:string: string:"${recipients[@]}"
+        signal org.asamk.Signal.send"${messageType[@]}" string:"$*" array:string: string:"${recipients[@]}"
     else
         signal send -m "$*" "${recipients[@]}"
     fi
