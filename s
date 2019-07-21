@@ -55,7 +55,8 @@ signal() {
    if (( debug )); then
        (set -x; "$signal_cli" --dbus "$@")
    elif (( dbus )); then
-       dbus-send --system --type=method_call --print-reply --dest="org.asamk.Signal" /org/asamk/Signal "$@"
+       # removed --print-reply from line below for cleanliness sake
+       dbus-send --system --type=method_call --dest="org.asamk.Signal" /org/asamk/Signal "$@"
    else
       "$signal_cli" --dbus "$@"
    fi
@@ -130,7 +131,6 @@ elif (( $# == 0 )); then
    signal send "${recipients[@]}"
 else
     if (( dbus )); then
-        echo "        signal org.asamk.Signal.send${messageType[@]} string:$* array:string: string:${recipients[@]}"
         signal org.asamk.Signal.send"${messageType[@]}" string:"$*" array:string: "${recipientsType[@]}":"${recipients[@]}"
     else
         signal send -m "$*" "${recipients[@]}"
