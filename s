@@ -92,9 +92,11 @@ if [[ $group ]]; then
       exit 1
    fi
    recipients=("$group")
+   recipientsType=("array:byte")
    messageType=("GroupMessage")
 else
-   messageType=("Message")
+    messageType=("Message")
+    recipientsType=("string")
 fi
 
 if (( ${#recipients[@]} == 0 )); then
@@ -128,7 +130,8 @@ elif (( $# == 0 )); then
    signal send "${recipients[@]}"
 else
     if (( dbus )); then
-        signal org.asamk.Signal.send"${messageType[@]}" string:"$*" array:string: string:"${recipients[@]}"
+        echo "        signal org.asamk.Signal.send${messageType[@]} string:$* array:string: string:${recipients[@]}"
+        signal org.asamk.Signal.send"${messageType[@]}" string:"$*" array:string: "${recipientsType[@]}":"${recipients[@]}"
     else
         signal send -m "$*" "${recipients[@]}"
     fi
